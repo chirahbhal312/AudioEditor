@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Audio Overwrite Studio (Compact MP3)</title>
+
+<script src="https://unpkg.com/lamejs@1.2.0/lame.min.js"></script>
+
+<style>
+body {
+  font-family: system-ui, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 40px;
+  max-width: 700px;
+  margin: auto;
+}
+
+h2 { margin-top: 30px; }
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+}
+
+input[type="file"], input[type="number"] {
+  background: #020617;
+  color: #e5e7eb;
+  border: 1px solid #334155;
+}
+
+input[type="range"] { margin-top: 12px; }
+
+button {
+  background: #6366f1;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.time {
+  font-size: 13px;
+  margin-top: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Base Audio</h2>
+<input type="file" id="baseInput" accept="audio/*">
+<audio id="baseAudio" controls></audio>
+<input type="range" id="baseScrubber" step="0.01">
+<div class="time" id="baseTime">00:00 / 00:00</div>
+<button id="markBtn">Mark Overwrite Point</button>
+
+<h2>Overwrite Time (seconds)</h2>
+<input type="number" id="insertTime" step="0.01" value="0">
+
+<h2>Overwrite Audio</h2>
+<input type="file" id="insertInput" accept="audio/*">
+<audio id="insertAudio" controls></audio>
+<input type="range" id="insertScrubber" step="0.01">
+<div class="time" id="insertTimeLabel">00:00 / 00:00</div>
+
+<h2>Final Output</h2>
+<button id="mergeBtn">Overwrite Audio</button>
+<button id="downloadBtn" disabled>Download Compact MP3</button>
+
+<script>
+const audioCtx = new AudioContext();
+let finalBuffer = null;
+
+setupPlayer("baseInput","baseAudio","baseScrubber","baseTime");
+setupPlayer("insertInput","insertAudio","insertScrubber","insertTimeLabel");
+
+const markBtn = document.getElementById("markBtn");
+const mergeBtn = document.getElementById("mergeBtn");
+const downloadBtn = document.getElementById("downloadBtn");
+const insertTimeInput = document.getElementById("insertTime");
+const baseAudio = document.getElementById("baseAudio");
+
+markBtn.onclick = () => {
+  insertTimeInput.value = baseAudio.currentTime.toFixed(2);
+};
+
+mergeBtn.onclick = async () => {
+  const baseFile = baseInput.files[0];
+  const insertFile = insertInput.files[0];
+  if (!baseFile || !insertFile) return alert("Upload both audios");
+
+  const baseBuffer = await decode(baseFile);
+  const insertBuffer = await decode(insertFile);
+
+  const t = parseFloat(insertTimeInput.value);
+  const overwriteDur = insertBuffer.duration;
+
+  if (t + overwriteDur > baseBuffer.duration) {
+    alert("Insert audio exceeds base duration");
+    return;
+  }
+
+  // Final duration SAME as base
+  const ctx = new OfflineAudioContext(
+    baseBuffer.numberOfChannels,
+    baseBuffer.length,
+    baseBuffer.sampleRate
+  );
+
+  // Base before overwrite
+  play(ctx, baseBuffer, 0, 0, t);
+
+  // Insert audio overwrites base
+  play(ctx, insertBuffer, t, 0, overwriteDur);
+
+  // Base after overwrite (skip overwritten part)
+  play(
+    ctx,
+    baseBuffer,
+    t + overwriteDur,
+    t + overwriteDur,
+    baseBuffer.duration - (t + overwriteDur)
+  );
+
+  const rendered = await ctx.startRendering();
+  const mono = await toMono(rendered);
+  finalBuffer = await downsample(mono, 22050);
+
+  downloadBtn.disabled = false;
+};
+
+downloadBtn.onclick = () => {
+  exportMp3(finalBuffer, 96);
+};
+
+/* ---------- helpers ---------- */
+
+function setupPlayer(inputId,audioId,scrubberId,timeId) {
+  const input = document.getElementById(inputId);
+  const audio = document.getElementById(audioId);
+  const scrubber = document.getElementById(scrubberId);
+  const timeLabel = document.getElementById(timeId);
+
+  input.onchange = () => {
+    audio.src = URL.createObjectURL(input.files[0]);
+    audio.load();
+  };
+
+  audio.onloadedmetadata = () => {
+    scrubber.max = audio.duration;
+    timeLabel.textContent = `00:00 / ${fmt(audio.duration)}`;
+  };
+
+  scrubber.oninput = () => audio.currentTime = scrubber.value;
+
+  audio.ontimeupdate = () => {
+    scrubber.value = audio.currentTime;
+    timeLabel.textContent =
+      `${fmt(audio.currentTime)} / ${fmt(audio.duration)}`;
+  };
+}
+
+function fmt(sec) {
+  const m = Math.floor(sec/60);
+  const s = Math.floor(sec%60);
+  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+async function decode(file) {
+  return await audioCtx.decodeAudioData(await file.arrayBuffer());
+}
+
+function play(ctx, buffer, when, offset, duration) {
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(ctx.destination);
+  src.start(when, offset, duration);
+}
+
+async function toMono(buffer) {
+  if (buffer.numberOfChannels === 1) return buffer;
+  const ctx = new OfflineAudioContext(1, buffer.length, buffer.sampleRate);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(ctx.destination);
+  src.start();
+  return await ctx.startRendering();
+}
+
+async function downsample(buffer, rate) {
+  if (buffer.sampleRate === rate) return buffer;
+  const ctx = new OfflineAudioContext(
+    buffer.numberOfChannels,
+    Math.ceil(buffer.duration * rate),
+    rate
+  );
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  src.connect(ctx.destination);
+  src.start();
+  return await ctx.startRendering();
+}
+
+/* ---------- MP3 ---------- */
+
+function exportMp3(buffer, bitrate) {
+  const encoder = new lamejs.Mp3Encoder(
+    buffer.numberOfChannels,
+    buffer.sampleRate,
+    bitrate
+  );
+
+  const samples = buffer.getChannelData(0);
+  const block = 1152;
+  let mp3 = [];
+
+  for (let i=0;i<samples.length;i+=block) {
+    const chunk = floatTo16(samples.subarray(i,i+block));
+    const buf = encoder.encodeBuffer(chunk);
+    if (buf.length) mp3.push(buf);
+  }
+
+  const end = encoder.flush();
+  if (end.length) mp3.push(end);
+
+  const blob = new Blob(mp3, {type:"audio/mp3"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "overwrite-compact.mp3";
+  a.click();
+}
+
+function floatTo16(f32) {
+  const i16 = new Int16Array(f32.length);
+  for (let i=0;i<f32.length;i++) {
+    i16[i] = Math.max(-1, Math.min(1, f32[i])) * 0x7fff;
+  }
+  return i16;
+}
+</script>
+
+</body>
+</html>

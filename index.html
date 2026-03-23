@@ -2,184 +2,725 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Audio Overwrite Studio (Compact MP3)</title>
-
+<title>Audio Overwrite Studio</title>
 <script src="https://unpkg.com/lamejs@1.2.0/lame.min.js"></script>
-
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-body {
-  font-family: system-ui, sans-serif;
-  background: #0f172a;
-  color: #e5e7eb;
-  padding: 40px;
-  max-width: 700px;
-  margin: auto;
-}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-h2 { margin-top: 30px; }
+  :root {
+    --bg: #0a0a0f;
+    --panel: #111118;
+    --border: #1e1e2e;
+    --accent: #00e5ff;
+    --accent2: #ff4f7b;
+    --accent3: #a78bfa;
+    --text: #e0e0f0;
+    --muted: #555570;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
 
-input, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 8px;
-  border-radius: 6px;
-  border: none;
-  font-size: 14px;
-}
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 20px 60px;
+  }
 
-input[type="file"], input[type="number"] {
-  background: #020617;
-  color: #e5e7eb;
-  border: 1px solid #334155;
-}
+  .studio {
+    max-width: 740px;
+    margin: auto;
+  }
 
-input[type="range"] { margin-top: 12px; }
+  header {
+    margin-bottom: 36px;
+    border-left: 3px solid var(--accent);
+    padding-left: 16px;
+  }
 
-button {
-  background: #6366f1;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-}
+  header h1 {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+  }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+  header p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
 
-.time {
-  font-size: 13px;
-  margin-top: 6px;
-}
+  /* Mode Tabs */
+  .mode-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 5px;
+    margin-bottom: 28px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-btn.active {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  .tab-btn:hover:not(.active) {
+    color: var(--text);
+  }
+
+  /* Mode panels */
+  .mode-panel { display: none; }
+  .mode-panel.active { display: block; }
+
+  /* Section */
+  .section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  input[type="file"] {
+    width: 100%;
+    padding: 10px 12px;
+    background: var(--bg);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  input[type="file"]:hover { border-color: var(--accent); }
+
+  audio {
+    width: 100%;
+    margin-top: 12px;
+    border-radius: 6px;
+    filter: invert(1) hue-rotate(180deg) brightness(0.9);
+    height: 36px;
+  }
+
+  .scrubber-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    accent-color: var(--accent);
+    height: 4px;
+    cursor: pointer;
+  }
+
+  .time-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 95px;
+    text-align: right;
+  }
+
+  /* Timestamps row */
+  .ts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .ts-group label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .ts-input-wrap {
+    display: flex;
+    gap: 6px;
+  }
+
+  input[type="number"] {
+    flex: 1;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+
+  input[type="number"]:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .mark-btn {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    font-size: 11px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .mark-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Cut mode options */
+  .cut-options {
+    display: flex;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .opt-btn {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-family: var(--font-mono);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .opt-btn.selected {
+    border-color: var(--accent2);
+    color: var(--accent2);
+    background: rgba(255,79,123,0.07);
+  }
+
+  .opt-btn:hover:not(.selected) {
+    border-color: var(--muted);
+    color: var(--text);
+  }
+
+  /* Waveform / visual timeline */
+  .timeline-wrap {
+    position: relative;
+    margin-top: 14px;
+    height: 54px;
+    background: var(--bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+
+  canvas.waveform {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  .region-overlay {
+    position: absolute;
+    top: 0; bottom: 0;
+    background: rgba(255,79,123,0.18);
+    border-left: 2px solid var(--accent2);
+    border-right: 2px solid var(--accent2);
+    pointer-events: none;
+  }
+
+  /* Action buttons */
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn-primary {
+    flex: 1;
+    padding: 13px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 9px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-secondary {
+    flex: 1;
+    padding: 13px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 9px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { background: rgba(0,229,255,0.07); }
+  .btn-secondary:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Status */
+  .status {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    color: var(--muted);
+    text-align: center;
+    margin-top: 12px;
+    min-height: 18px;
+  }
+
+  .status.ok { color: var(--accent); }
+  .status.err { color: var(--accent2); }
+
+  /* Info pill */
+  .info-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0,229,255,0.08);
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    margin-top: 10px;
+  }
 </style>
 </head>
-
 <body>
 
-<h2>Base Audio</h2>
-<input type="file" id="baseInput" accept="audio/*">
-<audio id="baseAudio" controls></audio>
-<input type="range" id="baseScrubber" step="0.01">
-<div class="time" id="baseTime">00:00 / 00:00</div>
-<button id="markBtn">Mark Overwrite Point</button>
+<div class="studio">
 
-<h2>Overwrite Time (seconds)</h2>
-<input type="number" id="insertTime" step="0.01" value="0">
+  <header>
+    <h1>// AUDIO STUDIO</h1>
+    <p>Overwrite segments · Cut / Trim clips · Export MP3</p>
+  </header>
 
-<h2>Overwrite Audio</h2>
-<input type="file" id="insertInput" accept="audio/*">
-<audio id="insertAudio" controls></audio>
-<input type="range" id="insertScrubber" step="0.01">
-<div class="time" id="insertTimeLabel">00:00 / 00:00</div>
+  <!-- Mode Tabs -->
+  <div class="mode-tabs">
+    <button class="tab-btn active" onclick="switchMode('overwrite')">OVERWRITE MODE</button>
+    <button class="tab-btn" onclick="switchMode('cut')">CUT / TRIM MODE</button>
+  </div>
 
-<h2>Final Output</h2>
-<button id="mergeBtn">Overwrite Audio</button>
-<button id="downloadBtn" disabled>Download Compact MP3</button>
+  <!-- ===== OVERWRITE MODE ===== -->
+  <div id="mode-overwrite" class="mode-panel active">
+
+    <div class="section">
+      <div class="section-label">Base Audio</div>
+      <input type="file" id="baseInput" accept="audio/*">
+      <audio id="baseAudio" controls></audio>
+      <div class="scrubber-row">
+        <input type="range" id="baseScrubber" step="0.01" value="0">
+        <span class="time-label" id="baseTime">00:00 / 00:00</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Overwrite Point</div>
+      <div class="ts-row">
+        <div class="ts-group">
+          <label>Insert at (seconds)</label>
+          <div class="ts-input-wrap">
+            <input type="number" id="insertTime" step="0.01" value="0" min="0">
+            <button class="mark-btn" onclick="markBase()">▶ Mark</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Overwrite Audio</div>
+      <input type="file" id="insertInput" accept="audio/*">
+      <audio id="insertAudio" controls></audio>
+      <div class="scrubber-row">
+        <input type="range" id="insertScrubber" step="0.01" value="0">
+        <span class="time-label" id="insertTimeLabel">00:00 / 00:00</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="mergeBtn" onclick="doOverwrite()">Overwrite Audio</button>
+      <button class="btn-secondary" id="downloadOverwriteBtn" disabled onclick="downloadFinal('overwrite-compact.mp3')">Download MP3</button>
+    </div>
+    <div class="status" id="overwriteStatus"></div>
+
+  </div>
+
+  <!-- ===== CUT / TRIM MODE ===== -->
+  <div id="mode-cut" class="mode-panel">
+
+    <div class="section">
+      <div class="section-label">Source Audio</div>
+      <input type="file" id="cutInput" accept="audio/*">
+      <audio id="cutAudio" controls></audio>
+      <div class="scrubber-row">
+        <input type="range" id="cutScrubber" step="0.01" value="0">
+        <span class="time-label" id="cutTimeLabel">00:00 / 00:00</span>
+      </div>
+
+      <div class="timeline-wrap">
+        <canvas class="waveform" id="cutWaveform"></canvas>
+        <div class="region-overlay" id="regionOverlay" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Cut Region</div>
+      <div class="ts-row">
+        <div class="ts-group">
+          <label>From (seconds)</label>
+          <div class="ts-input-wrap">
+            <input type="number" id="cutFrom" step="0.01" value="0" min="0" oninput="updateRegion()">
+            <button class="mark-btn" onclick="markCutFrom()">▶ Mark</button>
+          </div>
+        </div>
+        <div class="ts-group">
+          <label>To (seconds)</label>
+          <div class="ts-input-wrap">
+            <input type="number" id="cutTo" step="0.01" value="0" min="0" oninput="updateRegion()">
+            <button class="mark-btn" onclick="markCutTo()">▶ Mark</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="cut-options">
+        <button class="opt-btn selected" id="optRemove" onclick="selectCutMode('remove')">✂ Remove Region</button>
+        <button class="opt-btn" id="optKeep" onclick="selectCutMode('keep')">✦ Keep Region Only</button>
+      </div>
+
+      <div id="cutInfo" style="display:none" class="info-pill">
+        <span>⏱</span> <span id="cutInfoText"></span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="cutBtn" onclick="doCut()">Process Cut</button>
+      <button class="btn-secondary" id="downloadCutBtn" disabled onclick="downloadFinal('cut-output.mp3')">Download MP3</button>
+    </div>
+    <div class="status" id="cutStatus"></div>
+
+  </div>
+
+</div>
 
 <script>
 const audioCtx = new AudioContext();
 let finalBuffer = null;
+let cutAudioBuffer = null;
+let cutMode = 'remove'; // 'remove' | 'keep'
 
+/* ========== MODE SWITCH ========== */
+function switchMode(m) {
+  document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('mode-' + m).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function selectCutMode(m) {
+  cutMode = m;
+  document.getElementById('optRemove').classList.toggle('selected', m === 'remove');
+  document.getElementById('optKeep').classList.toggle('selected', m === 'keep');
+  updateRegion();
+}
+
+/* ========== PLAYERS ========== */
 setupPlayer("baseInput","baseAudio","baseScrubber","baseTime");
 setupPlayer("insertInput","insertAudio","insertScrubber","insertTimeLabel");
+setupCutPlayer();
 
-const markBtn = document.getElementById("markBtn");
-const mergeBtn = document.getElementById("mergeBtn");
-const downloadBtn = document.getElementById("downloadBtn");
-const insertTimeInput = document.getElementById("insertTime");
-const baseAudio = document.getElementById("baseAudio");
+function setupPlayer(inputId, audioId, scrId, timeId) {
+  const input = document.getElementById(inputId);
+  const audio = document.getElementById(audioId);
+  const scr   = document.getElementById(scrId);
+  const lbl   = document.getElementById(timeId);
 
-markBtn.onclick = () => {
-  insertTimeInput.value = baseAudio.currentTime.toFixed(2);
-};
+  input.onchange = () => {
+    audio.src = URL.createObjectURL(input.files[0]);
+    audio.load();
+  };
+  audio.onloadedmetadata = () => {
+    scr.max = audio.duration;
+    lbl.textContent = `00:00 / ${fmt(audio.duration)}`;
+  };
+  scr.oninput = () => audio.currentTime = +scr.value;
+  audio.ontimeupdate = () => {
+    scr.value = audio.currentTime;
+    lbl.textContent = `${fmt(audio.currentTime)} / ${fmt(audio.duration||0)}`;
+  };
+}
 
-mergeBtn.onclick = async () => {
-  const baseFile = baseInput.files[0];
-  const insertFile = insertInput.files[0];
-  if (!baseFile || !insertFile) return alert("Upload both audios");
+function setupCutPlayer() {
+  const input = document.getElementById("cutInput");
+  const audio = document.getElementById("cutAudio");
+  const scr   = document.getElementById("cutScrubber");
+  const lbl   = document.getElementById("cutTimeLabel");
 
-  const baseBuffer = await decode(baseFile);
-  const insertBuffer = await decode(insertFile);
+  input.onchange = async () => {
+    audio.src = URL.createObjectURL(input.files[0]);
+    audio.load();
+    const buf = await input.files[0].arrayBuffer();
+    cutAudioBuffer = await audioCtx.decodeAudioData(buf);
+    drawWaveform(cutAudioBuffer, document.getElementById("cutWaveform"));
+    document.getElementById("cutTo").value = cutAudioBuffer.duration.toFixed(2);
+    updateRegion();
+  };
+  audio.onloadedmetadata = () => {
+    scr.max = audio.duration;
+    lbl.textContent = `00:00 / ${fmt(audio.duration)}`;
+    updateRegion();
+  };
+  scr.oninput = () => audio.currentTime = +scr.value;
+  audio.ontimeupdate = () => {
+    scr.value = audio.currentTime;
+    lbl.textContent = `${fmt(audio.currentTime)} / ${fmt(audio.duration||0)}`;
+  };
+}
 
-  const t = parseFloat(insertTimeInput.value);
-  const overwriteDur = insertBuffer.duration;
+/* ========== MARK HELPERS ========== */
+function markBase() {
+  document.getElementById("insertTime").value =
+    document.getElementById("baseAudio").currentTime.toFixed(2);
+}
 
-  if (t + overwriteDur > baseBuffer.duration) {
-    alert("Insert audio exceeds base duration");
-    return;
+function markCutFrom() {
+  document.getElementById("cutFrom").value =
+    document.getElementById("cutAudio").currentTime.toFixed(2);
+  updateRegion();
+}
+
+function markCutTo() {
+  document.getElementById("cutTo").value =
+    document.getElementById("cutAudio").currentTime.toFixed(2);
+  updateRegion();
+}
+
+/* ========== REGION OVERLAY ========== */
+function updateRegion() {
+  if (!cutAudioBuffer) return;
+  const dur = cutAudioBuffer.duration;
+  const from = parseFloat(document.getElementById("cutFrom").value) || 0;
+  const to   = parseFloat(document.getElementById("cutTo").value) || 0;
+  const canvas = document.getElementById("cutWaveform");
+  const W = canvas.clientWidth;
+  const overlay = document.getElementById("regionOverlay");
+
+  const x1 = (from / dur) * W;
+  const x2 = (to   / dur) * W;
+  overlay.style.display = "block";
+  overlay.style.left  = Math.min(x1,x2) + "px";
+  overlay.style.width = Math.abs(x2-x1) + "px";
+
+  // Info pill
+  const regionDur = Math.abs(to - from);
+  const info = document.getElementById("cutInfo");
+  const infoText = document.getElementById("cutInfoText");
+  if (regionDur > 0) {
+    info.style.display = "inline-flex";
+    const resultDur = cutMode === 'remove'
+      ? dur - regionDur
+      : regionDur;
+    infoText.textContent =
+      cutMode === 'remove'
+        ? `Remove ${regionDur.toFixed(2)}s → output ${resultDur.toFixed(2)}s`
+        : `Keep ${regionDur.toFixed(2)}s → output ${resultDur.toFixed(2)}s`;
+  } else {
+    info.style.display = "none";
+  }
+}
+
+/* ========== WAVEFORM DRAW ========== */
+function drawWaveform(buffer, canvas) {
+  const ctx2 = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.clientWidth;
+  const H = canvas.clientHeight;
+  canvas.width = W * dpr;
+  canvas.height = H * dpr;
+  ctx2.scale(dpr, dpr);
+
+  const data = buffer.getChannelData(0);
+  const step = Math.ceil(data.length / W);
+
+  ctx2.clearRect(0, 0, W, H);
+  ctx2.fillStyle = "#0a0a0f";
+  ctx2.fillRect(0, 0, W, H);
+
+  ctx2.strokeStyle = "#00e5ff55";
+  ctx2.lineWidth = 1;
+  ctx2.beginPath();
+
+  for (let i = 0; i < W; i++) {
+    let min = 0, max = 0;
+    for (let j = 0; j < step; j++) {
+      const s = data[i * step + j] || 0;
+      if (s < min) min = s;
+      if (s > max) max = s;
+    }
+    const y1 = ((1 - max) / 2) * H;
+    const y2 = ((1 - min) / 2) * H;
+    ctx2.moveTo(i, y1);
+    ctx2.lineTo(i, y2);
+  }
+  ctx2.stroke();
+}
+
+/* ========== OVERWRITE ========== */
+async function doOverwrite() {
+  setStatus("overwriteStatus", "Processing…", "");
+  const baseFile   = document.getElementById("baseInput").files[0];
+  const insertFile = document.getElementById("insertInput").files[0];
+  if (!baseFile || !insertFile) {
+    setStatus("overwriteStatus", "Upload both audio files.", "err"); return;
   }
 
-  // Final duration SAME as base
+  const baseBuffer   = await decode(baseFile);
+  const insertBuffer = await decode(insertFile);
+  const t = parseFloat(document.getElementById("insertTime").value);
+  const overDur = insertBuffer.duration;
+
+  if (t + overDur > baseBuffer.duration) {
+    setStatus("overwriteStatus", "Insert audio exceeds base duration.", "err"); return;
+  }
+
   const ctx = new OfflineAudioContext(
     baseBuffer.numberOfChannels,
     baseBuffer.length,
     baseBuffer.sampleRate
   );
 
-  // Base before overwrite
-  play(ctx, baseBuffer, 0, 0, t);
-
-  // Insert audio overwrites base
-  play(ctx, insertBuffer, t, 0, overwriteDur);
-
-  // Base after overwrite (skip overwritten part)
-  play(
-    ctx,
-    baseBuffer,
-    t + overwriteDur,
-    t + overwriteDur,
-    baseBuffer.duration - (t + overwriteDur)
-  );
+  schedulePlay(ctx, baseBuffer, 0, 0, t);
+  schedulePlay(ctx, insertBuffer, t, 0, overDur);
+  schedulePlay(ctx, baseBuffer, t + overDur, t + overDur, baseBuffer.duration - (t + overDur));
 
   const rendered = await ctx.startRendering();
   const mono = await toMono(rendered);
   finalBuffer = await downsample(mono, 22050);
 
-  downloadBtn.disabled = false;
-};
-
-downloadBtn.onclick = () => {
-  exportMp3(finalBuffer, 96);
-};
-
-/* ---------- helpers ---------- */
-
-function setupPlayer(inputId,audioId,scrubberId,timeId) {
-  const input = document.getElementById(inputId);
-  const audio = document.getElementById(audioId);
-  const scrubber = document.getElementById(scrubberId);
-  const timeLabel = document.getElementById(timeId);
-
-  input.onchange = () => {
-    audio.src = URL.createObjectURL(input.files[0]);
-    audio.load();
-  };
-
-  audio.onloadedmetadata = () => {
-    scrubber.max = audio.duration;
-    timeLabel.textContent = `00:00 / ${fmt(audio.duration)}`;
-  };
-
-  scrubber.oninput = () => audio.currentTime = scrubber.value;
-
-  audio.ontimeupdate = () => {
-    scrubber.value = audio.currentTime;
-    timeLabel.textContent =
-      `${fmt(audio.currentTime)} / ${fmt(audio.duration)}`;
-  };
+  document.getElementById("downloadOverwriteBtn").disabled = false;
+  setStatus("overwriteStatus", `Done! Output: ${finalBuffer.duration.toFixed(2)}s`, "ok");
 }
 
-function fmt(sec) {
-  const m = Math.floor(sec/60);
-  const s = Math.floor(sec%60);
-  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+/* ========== CUT / TRIM ========== */
+async function doCut() {
+  if (!cutAudioBuffer) {
+    setStatus("cutStatus", "Upload a source audio file.", "err"); return;
+  }
+
+  let from = parseFloat(document.getElementById("cutFrom").value);
+  let to   = parseFloat(document.getElementById("cutTo").value);
+  const dur = cutAudioBuffer.duration;
+
+  if (from > to) [from, to] = [to, from];
+  from = Math.max(0, Math.min(from, dur));
+  to   = Math.max(0, Math.min(to, dur));
+
+  if (from === to) {
+    setStatus("cutStatus", "Start and end times cannot be equal.", "err"); return;
+  }
+
+  setStatus("cutStatus", "Processing…", "");
+
+  let segments = [];
+
+  if (cutMode === 'keep') {
+    // Keep only the region [from, to]
+    segments = [{ offset: from, duration: to - from }];
+  } else {
+    // Remove the region [from, to] — keep everything else
+    if (from > 0) segments.push({ offset: 0, duration: from });
+    if (to < dur)  segments.push({ offset: to, duration: dur - to });
+  }
+
+  if (segments.length === 0) {
+    setStatus("cutStatus", "Nothing left to export.", "err"); return;
+  }
+
+  const totalDur = segments.reduce((s, seg) => s + seg.duration, 0);
+  const sampleRate = cutAudioBuffer.sampleRate;
+  const totalSamples = Math.ceil(totalDur * sampleRate);
+
+  const ctx = new OfflineAudioContext(
+    cutAudioBuffer.numberOfChannels,
+    totalSamples,
+    sampleRate
+  );
+
+  let cursor = 0;
+  for (const seg of segments) {
+    schedulePlay(ctx, cutAudioBuffer, cursor, seg.offset, seg.duration);
+    cursor += seg.duration;
+  }
+
+  const rendered = await ctx.startRendering();
+  const mono = await toMono(rendered);
+  finalBuffer = await downsample(mono, 22050);
+
+  document.getElementById("downloadCutBtn").disabled = false;
+  setStatus("cutStatus", `Done! Output: ${finalBuffer.duration.toFixed(2)}s`, "ok");
 }
 
+/* ========== DOWNLOAD ========== */
+function downloadFinal(filename) {
+  if (!finalBuffer) return;
+  exportMp3(finalBuffer, 96, filename);
+}
+
+/* ========== AUDIO HELPERS ========== */
 async function decode(file) {
-  return await audioCtx.decodeAudioData(await file.arrayBuffer());
+  return audioCtx.decodeAudioData(await file.arrayBuffer());
 }
 
-function play(ctx, buffer, when, offset, duration) {
+function schedulePlay(ctx, buffer, when, offset, duration) {
+  if (duration <= 0) return;
   const src = ctx.createBufferSource();
   src.buffer = buffer;
   src.connect(ctx.destination);
@@ -193,7 +734,7 @@ async function toMono(buffer) {
   src.buffer = buffer;
   src.connect(ctx.destination);
   src.start();
-  return await ctx.startRendering();
+  return ctx.startRendering();
 }
 
 async function downsample(buffer, rate) {
@@ -207,46 +748,55 @@ async function downsample(buffer, rate) {
   src.buffer = buffer;
   src.connect(ctx.destination);
   src.start();
-  return await ctx.startRendering();
+  return ctx.startRendering();
 }
 
-/* ---------- MP3 ---------- */
-
-function exportMp3(buffer, bitrate) {
+function exportMp3(buffer, bitrate, filename) {
   const encoder = new lamejs.Mp3Encoder(
     buffer.numberOfChannels,
     buffer.sampleRate,
     bitrate
   );
-
   const samples = buffer.getChannelData(0);
   const block = 1152;
-  let mp3 = [];
+  const mp3 = [];
 
-  for (let i=0;i<samples.length;i+=block) {
-    const chunk = floatTo16(samples.subarray(i,i+block));
+  for (let i = 0; i < samples.length; i += block) {
+    const chunk = floatTo16(samples.subarray(i, i + block));
     const buf = encoder.encodeBuffer(chunk);
     if (buf.length) mp3.push(buf);
   }
-
   const end = encoder.flush();
   if (end.length) mp3.push(end);
 
-  const blob = new Blob(mp3, {type:"audio/mp3"});
+  const blob = new Blob(mp3, { type: "audio/mp3" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "overwrite-compact.mp3";
+  a.download = filename;
   a.click();
 }
 
 function floatTo16(f32) {
   const i16 = new Int16Array(f32.length);
-  for (let i=0;i<f32.length;i++) {
+  for (let i = 0; i < f32.length; i++) {
     i16[i] = Math.max(-1, Math.min(1, f32[i])) * 0x7fff;
   }
   return i16;
 }
-</script>
 
+/* ========== UTIL ========== */
+function fmt(sec) {
+  if (!sec || isNaN(sec)) return "00:00";
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = "status " + type;
+}
+</script>
 </body>
 </html>

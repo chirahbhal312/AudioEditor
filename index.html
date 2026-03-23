@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Audio Overwrite Studio</title>
+<title>Audio Studio</title>
 <script src="https://unpkg.com/lamejs@1.2.0/lame.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
@@ -21,6 +21,7 @@
     --font-body: 'DM Sans', sans-serif;
   }
 
+  *, *::before, *::after { box-sizing: border-box; }
   body {
     font-family: var(--font-body);
     background: var(--bg);
@@ -29,31 +30,21 @@
     padding: 32px 20px 60px;
   }
 
-  .studio {
-    max-width: 740px;
-    margin: auto;
-  }
+  .studio { max-width: 740px; margin: auto; }
 
   header {
     margin-bottom: 36px;
     border-left: 3px solid var(--accent);
     padding-left: 16px;
   }
-
   header h1 {
     font-family: var(--font-mono);
     font-size: 22px;
     letter-spacing: 0.05em;
     color: var(--accent);
   }
+  header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
-  header p {
-    font-size: 13px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-
-  /* Mode Tabs */
   .mode-tabs {
     display: flex;
     gap: 4px;
@@ -63,35 +54,25 @@
     padding: 5px;
     margin-bottom: 28px;
   }
-
   .tab-btn {
     flex: 1;
-    padding: 10px;
+    padding: 10px 6px;
     border-radius: 7px;
     border: none;
     background: transparent;
     color: var(--muted);
     font-family: var(--font-mono);
-    font-size: 12px;
-    letter-spacing: 0.05em;
+    font-size: 11px;
+    letter-spacing: 0.04em;
     cursor: pointer;
     transition: all 0.2s;
   }
+  .tab-btn.active { background: var(--border); color: var(--text); }
+  .tab-btn:hover:not(.active) { color: var(--text); }
 
-  .tab-btn.active {
-    background: var(--border);
-    color: var(--text);
-  }
-
-  .tab-btn:hover:not(.active) {
-    color: var(--text);
-  }
-
-  /* Mode panels */
   .mode-panel { display: none; }
   .mode-panel.active { display: block; }
 
-  /* Section */
   .section {
     background: var(--panel);
     border: 1px solid var(--border);
@@ -99,7 +80,6 @@
     padding: 20px;
     margin-bottom: 16px;
   }
-
   .section-label {
     font-family: var(--font-mono);
     font-size: 10px;
@@ -120,7 +100,6 @@
     cursor: pointer;
     transition: border-color 0.2s;
   }
-
   input[type="file"]:hover { border-color: var(--accent); }
 
   audio {
@@ -137,14 +116,12 @@
     gap: 10px;
     margin-top: 10px;
   }
-
   input[type="range"] {
     flex: 1;
     accent-color: var(--accent);
     height: 4px;
     cursor: pointer;
   }
-
   .time-label {
     font-family: var(--font-mono);
     font-size: 11px;
@@ -153,13 +130,13 @@
     text-align: right;
   }
 
-  /* Timestamps row */
   .ts-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     margin-top: 14px;
   }
+  .ts-row.single { grid-template-columns: 1fr; }
 
   .ts-group label {
     display: block;
@@ -167,11 +144,7 @@
     color: var(--muted);
     margin-bottom: 5px;
   }
-
-  .ts-input-wrap {
-    display: flex;
-    gap: 6px;
-  }
+  .ts-input-wrap { display: flex; gap: 6px; }
 
   input[type="number"] {
     flex: 1;
@@ -183,11 +156,7 @@
     font-family: var(--font-mono);
     font-size: 13px;
   }
-
-  input[type="number"]:focus {
-    outline: none;
-    border-color: var(--accent);
-  }
+  input[type="number"]:focus { outline: none; border-color: var(--accent); }
 
   .mark-btn {
     padding: 8px 12px;
@@ -200,19 +169,13 @@
     white-space: nowrap;
     transition: all 0.2s;
   }
+  .mark-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-  .mark-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  /* Cut mode options */
   .cut-options {
     display: flex;
     gap: 8px;
     margin-top: 14px;
   }
-
   .opt-btn {
     flex: 1;
     padding: 10px;
@@ -225,19 +188,13 @@
     cursor: pointer;
     transition: all 0.2s;
   }
-
   .opt-btn.selected {
     border-color: var(--accent2);
     color: var(--accent2);
     background: rgba(255,79,123,0.07);
   }
+  .opt-btn:hover:not(.selected) { border-color: var(--muted); color: var(--text); }
 
-  .opt-btn:hover:not(.selected) {
-    border-color: var(--muted);
-    color: var(--text);
-  }
-
-  /* Waveform / visual timeline */
   .timeline-wrap {
     position: relative;
     margin-top: 14px;
@@ -247,12 +204,7 @@
     border: 1px solid var(--border);
     overflow: hidden;
   }
-
-  canvas.waveform {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
+  canvas.waveform { display: block; width: 100%; height: 100%; }
 
   .region-overlay {
     position: absolute;
@@ -262,14 +214,28 @@
     border-right: 2px solid var(--accent2);
     pointer-events: none;
   }
+  .marker-line {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent3);
+    pointer-events: none;
+  }
+  .marker-label {
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--accent3);
+    pointer-events: none;
+  }
 
-  /* Action buttons */
   .actions {
     display: flex;
     gap: 10px;
     margin-top: 20px;
   }
-
   .btn-primary {
     flex: 1;
     padding: 13px;
@@ -284,7 +250,6 @@
     letter-spacing: 0.05em;
     transition: opacity 0.2s, transform 0.1s;
   }
-
   .btn-primary:hover { opacity: 0.88; }
   .btn-primary:active { transform: scale(0.98); }
   .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -302,11 +267,9 @@
     letter-spacing: 0.05em;
     transition: all 0.2s;
   }
-
   .btn-secondary:hover { background: rgba(0,229,255,0.07); }
   .btn-secondary:disabled { opacity: 0.3; cursor: not-allowed; }
 
-  /* Status */
   .status {
     font-size: 12px;
     font-family: var(--font-mono);
@@ -315,11 +278,9 @@
     margin-top: 12px;
     min-height: 18px;
   }
-
   .status.ok { color: var(--accent); }
   .status.err { color: var(--accent2); }
 
-  /* Info pill */
   .info-pill {
     display: inline-flex;
     align-items: center;
@@ -333,26 +294,29 @@
     color: var(--accent);
     margin-top: 10px;
   }
+  .info-pill.purple {
+    background: rgba(167,139,250,0.08);
+    border-color: rgba(167,139,250,0.25);
+    color: var(--accent3);
+  }
 </style>
 </head>
 <body>
-
 <div class="studio">
 
   <header>
     <h1>// AUDIO STUDIO</h1>
-    <p>Overwrite segments · Cut / Trim clips · Export MP3</p>
+    <p>Overwrite segments &middot; Insert clips &middot; Cut / Trim &middot; Export MP3</p>
   </header>
 
-  <!-- Mode Tabs -->
   <div class="mode-tabs">
-    <button class="tab-btn active" onclick="switchMode('overwrite')">OVERWRITE MODE</button>
-    <button class="tab-btn" onclick="switchMode('cut')">CUT / TRIM MODE</button>
+    <button class="tab-btn active" data-mode="overwrite" onclick="switchMode('overwrite',this)">OVERWRITE</button>
+    <button class="tab-btn" data-mode="insert" onclick="switchMode('insert',this)">INSERT</button>
+    <button class="tab-btn" data-mode="cut" onclick="switchMode('cut',this)">CUT / TRIM</button>
   </div>
 
   <!-- ===== OVERWRITE MODE ===== -->
   <div id="mode-overwrite" class="mode-panel active">
-
     <div class="section">
       <div class="section-label">Base Audio</div>
       <input type="file" id="baseInput" accept="audio/*">
@@ -365,12 +329,12 @@
 
     <div class="section">
       <div class="section-label">Overwrite Point</div>
-      <div class="ts-row">
+      <div class="ts-row single">
         <div class="ts-group">
-          <label>Insert at (seconds)</label>
+          <label>Replace base audio starting at (seconds)</label>
           <div class="ts-input-wrap">
-            <input type="number" id="insertTime" step="0.01" value="0" min="0">
-            <button class="mark-btn" onclick="markBase()">▶ Mark</button>
+            <input type="number" id="owInsertTime" step="0.01" value="0" min="0">
+            <button class="mark-btn" onclick="markBase()">&#9654; Mark</button>
           </div>
         </div>
       </div>
@@ -378,25 +342,73 @@
 
     <div class="section">
       <div class="section-label">Overwrite Audio</div>
-      <input type="file" id="insertInput" accept="audio/*">
-      <audio id="insertAudio" controls></audio>
+      <input type="file" id="owInsertInput" accept="audio/*">
+      <audio id="owInsertAudio" controls></audio>
       <div class="scrubber-row">
-        <input type="range" id="insertScrubber" step="0.01" value="0">
-        <span class="time-label" id="insertTimeLabel">00:00 / 00:00</span>
+        <input type="range" id="owInsertScrubber" step="0.01" value="0">
+        <span class="time-label" id="owInsertTimeLabel">00:00 / 00:00</span>
       </div>
     </div>
 
     <div class="actions">
-      <button class="btn-primary" id="mergeBtn" onclick="doOverwrite()">Overwrite Audio</button>
-      <button class="btn-secondary" id="downloadOverwriteBtn" disabled onclick="downloadFinal('overwrite-compact.mp3')">Download MP3</button>
+      <button class="btn-primary" onclick="doOverwrite()">Overwrite Audio</button>
+      <button class="btn-secondary" id="downloadOverwriteBtn" disabled onclick="downloadFinal('overwrite-output.mp3')">Download MP3</button>
     </div>
     <div class="status" id="overwriteStatus"></div>
+  </div>
 
+  <!-- ===== INSERT MODE ===== -->
+  <div id="mode-insert" class="mode-panel">
+    <div class="section">
+      <div class="section-label">Base Audio</div>
+      <input type="file" id="insBaseInput" accept="audio/*">
+      <audio id="insBaseAudio" controls></audio>
+      <div class="scrubber-row">
+        <input type="range" id="insBaseScrubber" step="0.01" value="0">
+        <span class="time-label" id="insBaseTime">00:00 / 00:00</span>
+      </div>
+      <div class="timeline-wrap">
+        <canvas class="waveform" id="insBaseWaveform"></canvas>
+        <div class="marker-line" id="insMarkerLine" style="display:none;"></div>
+        <div class="marker-label" id="insMarkerLabel" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Insert Point</div>
+      <div class="ts-row single">
+        <div class="ts-group">
+          <label>Splice clip in at (seconds) — everything after shifts forward</label>
+          <div class="ts-input-wrap">
+            <input type="number" id="insAtTime" step="0.01" value="0" min="0" oninput="updateInsertMarker()">
+            <button class="mark-btn" onclick="markInsertPoint()">&#9654; Mark</button>
+          </div>
+        </div>
+      </div>
+      <div id="insInfo" class="info-pill purple" style="display:none;">
+        <span>&#9201;</span> <span id="insInfoText"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Clip to Insert</div>
+      <input type="file" id="insClipInput" accept="audio/*">
+      <audio id="insClipAudio" controls></audio>
+      <div class="scrubber-row">
+        <input type="range" id="insClipScrubber" step="0.01" value="0">
+        <span class="time-label" id="insClipTime">00:00 / 00:00</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" onclick="doInsert()">Insert Audio</button>
+      <button class="btn-secondary" id="downloadInsertBtn" disabled onclick="downloadFinal('insert-output.mp3')">Download MP3</button>
+    </div>
+    <div class="status" id="insertStatus"></div>
   </div>
 
   <!-- ===== CUT / TRIM MODE ===== -->
   <div id="mode-cut" class="mode-panel">
-
     <div class="section">
       <div class="section-label">Source Audio</div>
       <input type="file" id="cutInput" accept="audio/*">
@@ -405,7 +417,6 @@
         <input type="range" id="cutScrubber" step="0.01" value="0">
         <span class="time-label" id="cutTimeLabel">00:00 / 00:00</span>
       </div>
-
       <div class="timeline-wrap">
         <canvas class="waveform" id="cutWaveform"></canvas>
         <div class="region-overlay" id="regionOverlay" style="display:none"></div>
@@ -419,34 +430,33 @@
           <label>From (seconds)</label>
           <div class="ts-input-wrap">
             <input type="number" id="cutFrom" step="0.01" value="0" min="0" oninput="updateRegion()">
-            <button class="mark-btn" onclick="markCutFrom()">▶ Mark</button>
+            <button class="mark-btn" onclick="markCutFrom()">&#9654; Mark</button>
           </div>
         </div>
         <div class="ts-group">
           <label>To (seconds)</label>
           <div class="ts-input-wrap">
             <input type="number" id="cutTo" step="0.01" value="0" min="0" oninput="updateRegion()">
-            <button class="mark-btn" onclick="markCutTo()">▶ Mark</button>
+            <button class="mark-btn" onclick="markCutTo()">&#9654; Mark</button>
           </div>
         </div>
       </div>
 
       <div class="cut-options">
-        <button class="opt-btn selected" id="optRemove" onclick="selectCutMode('remove')">✂ Remove Region</button>
-        <button class="opt-btn" id="optKeep" onclick="selectCutMode('keep')">✦ Keep Region Only</button>
+        <button class="opt-btn selected" id="optRemove" onclick="selectCutMode('remove')">&#9988; Remove Region</button>
+        <button class="opt-btn" id="optKeep" onclick="selectCutMode('keep')">&#10022; Keep Region Only</button>
       </div>
 
-      <div id="cutInfo" style="display:none" class="info-pill">
-        <span>⏱</span> <span id="cutInfoText"></span>
+      <div id="cutInfo" class="info-pill" style="display:none;">
+        <span>&#9201;</span> <span id="cutInfoText"></span>
       </div>
     </div>
 
     <div class="actions">
-      <button class="btn-primary" id="cutBtn" onclick="doCut()">Process Cut</button>
+      <button class="btn-primary" onclick="doCut()">Process Cut</button>
       <button class="btn-secondary" id="downloadCutBtn" disabled onclick="downloadFinal('cut-output.mp3')">Download MP3</button>
     </div>
     <div class="status" id="cutStatus"></div>
-
   </div>
 
 </div>
@@ -455,14 +465,16 @@
 const audioCtx = new AudioContext();
 let finalBuffer = null;
 let cutAudioBuffer = null;
-let cutMode = 'remove'; // 'remove' | 'keep'
+let insBaseBuffer = null;
+let insClipBuffer = null;
+let cutMode = 'remove';
 
 /* ========== MODE SWITCH ========== */
-function switchMode(m) {
+function switchMode(m, btn) {
   document.querySelectorAll('.mode-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('mode-' + m).classList.add('active');
-  event.target.classList.add('active');
+  btn.classList.add('active');
 }
 
 function selectCutMode(m) {
@@ -472,12 +484,8 @@ function selectCutMode(m) {
   updateRegion();
 }
 
-/* ========== PLAYERS ========== */
-setupPlayer("baseInput","baseAudio","baseScrubber","baseTime");
-setupPlayer("insertInput","insertAudio","insertScrubber","insertTimeLabel");
-setupCutPlayer();
-
-function setupPlayer(inputId, audioId, scrId, timeId) {
+/* ========== GENERIC PLAYER SETUP ========== */
+function setupPlayer(inputId, audioId, scrId, timeId, onLoadedCb) {
   const input = document.getElementById(inputId);
   const audio = document.getElementById(audioId);
   const scr   = document.getElementById(scrId);
@@ -486,6 +494,7 @@ function setupPlayer(inputId, audioId, scrId, timeId) {
   input.onchange = () => {
     audio.src = URL.createObjectURL(input.files[0]);
     audio.load();
+    if (onLoadedCb) onLoadedCb(input.files[0]);
   };
   audio.onloadedmetadata = () => {
     scr.max = audio.duration;
@@ -498,37 +507,39 @@ function setupPlayer(inputId, audioId, scrId, timeId) {
   };
 }
 
-function setupCutPlayer() {
-  const input = document.getElementById("cutInput");
-  const audio = document.getElementById("cutAudio");
-  const scr   = document.getElementById("cutScrubber");
-  const lbl   = document.getElementById("cutTimeLabel");
+// Overwrite players
+setupPlayer("baseInput","baseAudio","baseScrubber","baseTime");
+setupPlayer("owInsertInput","owInsertAudio","owInsertScrubber","owInsertTimeLabel");
 
-  input.onchange = async () => {
-    audio.src = URL.createObjectURL(input.files[0]);
-    audio.load();
-    const buf = await input.files[0].arrayBuffer();
-    cutAudioBuffer = await audioCtx.decodeAudioData(buf);
-    drawWaveform(cutAudioBuffer, document.getElementById("cutWaveform"));
-    document.getElementById("cutTo").value = cutAudioBuffer.duration.toFixed(2);
-    updateRegion();
-  };
-  audio.onloadedmetadata = () => {
-    scr.max = audio.duration;
-    lbl.textContent = `00:00 / ${fmt(audio.duration)}`;
-    updateRegion();
-  };
-  scr.oninput = () => audio.currentTime = +scr.value;
-  audio.ontimeupdate = () => {
-    scr.value = audio.currentTime;
-    lbl.textContent = `${fmt(audio.currentTime)} / ${fmt(audio.duration||0)}`;
-  };
-}
+// Insert players
+setupPlayer("insBaseInput","insBaseAudio","insBaseScrubber","insBaseTime", async (file) => {
+  insBaseBuffer = await decodeFile(file);
+  drawWaveform(insBaseBuffer, document.getElementById("insBaseWaveform"));
+  updateInsertMarker();
+});
+setupPlayer("insClipInput","insClipAudio","insClipScrubber","insClipTime", async (file) => {
+  insClipBuffer = await decodeFile(file);
+  updateInsertInfo();
+});
+
+// Cut player
+setupPlayer("cutInput","cutAudio","cutScrubber","cutTimeLabel", async (file) => {
+  cutAudioBuffer = await decodeFile(file);
+  drawWaveform(cutAudioBuffer, document.getElementById("cutWaveform"));
+  document.getElementById("cutTo").value = cutAudioBuffer.duration.toFixed(2);
+  updateRegion();
+});
 
 /* ========== MARK HELPERS ========== */
 function markBase() {
-  document.getElementById("insertTime").value =
+  document.getElementById("owInsertTime").value =
     document.getElementById("baseAudio").currentTime.toFixed(2);
+}
+
+function markInsertPoint() {
+  document.getElementById("insAtTime").value =
+    document.getElementById("insBaseAudio").currentTime.toFixed(2);
+  updateInsertMarker();
 }
 
 function markCutFrom() {
@@ -543,14 +554,54 @@ function markCutTo() {
   updateRegion();
 }
 
-/* ========== REGION OVERLAY ========== */
+/* ========== INSERT MARKER ========== */
+function updateInsertMarker() {
+  const line  = document.getElementById("insMarkerLine");
+  const label = document.getElementById("insMarkerLabel");
+  if (!insBaseBuffer) return;
+
+  const t = parseFloat(document.getElementById("insAtTime").value) || 0;
+  const dur = insBaseBuffer.duration;
+  const canvas = document.getElementById("insBaseWaveform");
+  const W = canvas.clientWidth || canvas.offsetWidth || 680;
+  const pct = Math.min(t / dur, 1);
+  const x = pct * W;
+
+  line.style.display = "block";
+  line.style.left = x + "px";
+  label.style.display = "block";
+  label.style.left = (x + 4) + "px";
+  label.textContent = t.toFixed(2) + "s";
+
+  updateInsertInfo();
+}
+
+function updateInsertInfo() {
+  const info = document.getElementById("insInfo");
+  const infoText = document.getElementById("insInfoText");
+  if (!insBaseBuffer) { info.style.display = "none"; return; }
+
+  const t = parseFloat(document.getElementById("insAtTime").value) || 0;
+  const clipDur = insClipBuffer ? insClipBuffer.duration : 0;
+  const totalOut = insBaseBuffer.duration + clipDur;
+
+  info.style.display = "inline-flex";
+  if (clipDur > 0) {
+    infoText.textContent =
+      `Insert ${clipDur.toFixed(2)}s at ${t.toFixed(2)}s → output ${totalOut.toFixed(2)}s`;
+  } else {
+    infoText.textContent = `Mark: ${t.toFixed(2)}s | Base: ${insBaseBuffer.duration.toFixed(2)}s`;
+  }
+}
+
+/* ========== CUT REGION OVERLAY ========== */
 function updateRegion() {
   if (!cutAudioBuffer) return;
   const dur = cutAudioBuffer.duration;
   const from = parseFloat(document.getElementById("cutFrom").value) || 0;
   const to   = parseFloat(document.getElementById("cutTo").value) || 0;
   const canvas = document.getElementById("cutWaveform");
-  const W = canvas.clientWidth;
+  const W = canvas.clientWidth || canvas.offsetWidth || 680;
   const overlay = document.getElementById("regionOverlay");
 
   const x1 = (from / dur) * W;
@@ -559,30 +610,26 @@ function updateRegion() {
   overlay.style.left  = Math.min(x1,x2) + "px";
   overlay.style.width = Math.abs(x2-x1) + "px";
 
-  // Info pill
   const regionDur = Math.abs(to - from);
   const info = document.getElementById("cutInfo");
   const infoText = document.getElementById("cutInfoText");
   if (regionDur > 0) {
     info.style.display = "inline-flex";
-    const resultDur = cutMode === 'remove'
-      ? dur - regionDur
-      : regionDur;
-    infoText.textContent =
-      cutMode === 'remove'
-        ? `Remove ${regionDur.toFixed(2)}s → output ${resultDur.toFixed(2)}s`
-        : `Keep ${regionDur.toFixed(2)}s → output ${resultDur.toFixed(2)}s`;
+    const resultDur = cutMode === 'remove' ? dur - regionDur : regionDur;
+    infoText.textContent = cutMode === 'remove'
+      ? `Remove ${regionDur.toFixed(2)}s → output ${resultDur.toFixed(2)}s`
+      : `Keep ${regionDur.toFixed(2)}s → output ${resultDur.toFixed(2)}s`;
   } else {
     info.style.display = "none";
   }
 }
 
-/* ========== WAVEFORM DRAW ========== */
+/* ========== WAVEFORM ========== */
 function drawWaveform(buffer, canvas) {
   const ctx2 = canvas.getContext("2d");
   const dpr = window.devicePixelRatio || 1;
-  const W = canvas.clientWidth;
-  const H = canvas.clientHeight;
+  const W = canvas.clientWidth || canvas.offsetWidth || 680;
+  const H = canvas.clientHeight || canvas.offsetHeight || 54;
   canvas.width = W * dpr;
   canvas.height = H * dpr;
   ctx2.scale(dpr, dpr);
@@ -593,7 +640,6 @@ function drawWaveform(buffer, canvas) {
   ctx2.clearRect(0, 0, W, H);
   ctx2.fillStyle = "#0a0a0f";
   ctx2.fillRect(0, 0, W, H);
-
   ctx2.strokeStyle = "#00e5ff55";
   ctx2.lineWidth = 1;
   ctx2.beginPath();
@@ -605,26 +651,24 @@ function drawWaveform(buffer, canvas) {
       if (s < min) min = s;
       if (s > max) max = s;
     }
-    const y1 = ((1 - max) / 2) * H;
-    const y2 = ((1 - min) / 2) * H;
-    ctx2.moveTo(i, y1);
-    ctx2.lineTo(i, y2);
+    ctx2.moveTo(i, ((1 - max) / 2) * H);
+    ctx2.lineTo(i, ((1 - min) / 2) * H);
   }
   ctx2.stroke();
 }
 
 /* ========== OVERWRITE ========== */
 async function doOverwrite() {
-  setStatus("overwriteStatus", "Processing…", "");
+  setStatus("overwriteStatus", "Processing...", "");
   const baseFile   = document.getElementById("baseInput").files[0];
-  const insertFile = document.getElementById("insertInput").files[0];
+  const insertFile = document.getElementById("owInsertInput").files[0];
   if (!baseFile || !insertFile) {
     setStatus("overwriteStatus", "Upload both audio files.", "err"); return;
   }
 
-  const baseBuffer   = await decode(baseFile);
-  const insertBuffer = await decode(insertFile);
-  const t = parseFloat(document.getElementById("insertTime").value);
+  const baseBuffer   = await decodeFile(baseFile);
+  const insertBuffer = await decodeFile(insertFile);
+  const t = parseFloat(document.getElementById("owInsertTime").value);
   const overDur = insertBuffer.duration;
 
   if (t + overDur > baseBuffer.duration) {
@@ -632,24 +676,62 @@ async function doOverwrite() {
   }
 
   const ctx = new OfflineAudioContext(
-    baseBuffer.numberOfChannels,
-    baseBuffer.length,
-    baseBuffer.sampleRate
+    baseBuffer.numberOfChannels, baseBuffer.length, baseBuffer.sampleRate
   );
-
   schedulePlay(ctx, baseBuffer, 0, 0, t);
   schedulePlay(ctx, insertBuffer, t, 0, overDur);
   schedulePlay(ctx, baseBuffer, t + overDur, t + overDur, baseBuffer.duration - (t + overDur));
 
   const rendered = await ctx.startRendering();
-  const mono = await toMono(rendered);
-  finalBuffer = await downsample(mono, 22050);
+  finalBuffer = await toMonoDownsampled(rendered);
 
   document.getElementById("downloadOverwriteBtn").disabled = false;
   setStatus("overwriteStatus", `Done! Output: ${finalBuffer.duration.toFixed(2)}s`, "ok");
 }
 
-/* ========== CUT / TRIM ========== */
+/* ========== INSERT ========== */
+async function doInsert() {
+  setStatus("insertStatus", "Processing...", "");
+  const baseFile = document.getElementById("insBaseInput").files[0];
+  const clipFile = document.getElementById("insClipInput").files[0];
+  if (!baseFile || !clipFile) {
+    setStatus("insertStatus", "Upload both audio files.", "err"); return;
+  }
+
+  const baseBuffer = await decodeFile(baseFile);
+  const clipBuffer = await decodeFile(clipFile);
+
+  let t = parseFloat(document.getElementById("insAtTime").value) || 0;
+  t = Math.max(0, Math.min(t, baseBuffer.duration));
+
+  // Total output = base + clip duration (nothing is overwritten)
+  const totalDur = baseBuffer.duration + clipBuffer.duration;
+  const sampleRate = baseBuffer.sampleRate;
+  const totalSamples = Math.ceil(totalDur * sampleRate);
+
+  const ctx = new OfflineAudioContext(
+    baseBuffer.numberOfChannels, totalSamples, sampleRate
+  );
+
+  // Part 1: base audio from 0 to t
+  schedulePlay(ctx, baseBuffer, 0, 0, t);
+
+  // Part 2: the inserted clip, starts at t
+  schedulePlay(ctx, clipBuffer, t, 0, clipBuffer.duration);
+
+  // Part 3: rest of base audio, shifted after the clip
+  const restStart = t + clipBuffer.duration;
+  const restDur = baseBuffer.duration - t;
+  schedulePlay(ctx, baseBuffer, restStart, t, restDur);
+
+  const rendered = await ctx.startRendering();
+  finalBuffer = await toMonoDownsampled(rendered);
+
+  document.getElementById("downloadInsertBtn").disabled = false;
+  setStatus("insertStatus", `Done! Output: ${finalBuffer.duration.toFixed(2)}s`, "ok");
+}
+
+/* ========== CUT ========== */
 async function doCut() {
   if (!cutAudioBuffer) {
     setStatus("cutStatus", "Upload a source audio file.", "err"); return;
@@ -667,18 +749,14 @@ async function doCut() {
     setStatus("cutStatus", "Start and end times cannot be equal.", "err"); return;
   }
 
-  setStatus("cutStatus", "Processing…", "");
+  setStatus("cutStatus", "Processing...", "");
 
-  let segments = [];
-
-  if (cutMode === 'keep') {
-    // Keep only the region [from, to]
-    segments = [{ offset: from, duration: to - from }];
-  } else {
-    // Remove the region [from, to] — keep everything else
-    if (from > 0) segments.push({ offset: 0, duration: from });
-    if (to < dur)  segments.push({ offset: to, duration: dur - to });
-  }
+  let segments = cutMode === 'keep'
+    ? [{ offset: from, duration: to - from }]
+    : [
+        ...(from > 0 ? [{ offset: 0, duration: from }] : []),
+        ...(to < dur  ? [{ offset: to, duration: dur - to }] : [])
+      ];
 
   if (segments.length === 0) {
     setStatus("cutStatus", "Nothing left to export.", "err"); return;
@@ -689,9 +767,7 @@ async function doCut() {
   const totalSamples = Math.ceil(totalDur * sampleRate);
 
   const ctx = new OfflineAudioContext(
-    cutAudioBuffer.numberOfChannels,
-    totalSamples,
-    sampleRate
+    cutAudioBuffer.numberOfChannels, totalSamples, sampleRate
   );
 
   let cursor = 0;
@@ -701,8 +777,7 @@ async function doCut() {
   }
 
   const rendered = await ctx.startRendering();
-  const mono = await toMono(rendered);
-  finalBuffer = await downsample(mono, 22050);
+  finalBuffer = await toMonoDownsampled(rendered);
 
   document.getElementById("downloadCutBtn").disabled = false;
   setStatus("cutStatus", `Done! Output: ${finalBuffer.duration.toFixed(2)}s`, "ok");
@@ -715,7 +790,7 @@ function downloadFinal(filename) {
 }
 
 /* ========== AUDIO HELPERS ========== */
-async function decode(file) {
+async function decodeFile(file) {
   return audioCtx.decodeAudioData(await file.arrayBuffer());
 }
 
@@ -727,36 +802,31 @@ function schedulePlay(ctx, buffer, when, offset, duration) {
   src.start(when, offset, duration);
 }
 
-async function toMono(buffer) {
-  if (buffer.numberOfChannels === 1) return buffer;
-  const ctx = new OfflineAudioContext(1, buffer.length, buffer.sampleRate);
-  const src = ctx.createBufferSource();
-  src.buffer = buffer;
-  src.connect(ctx.destination);
-  src.start();
-  return ctx.startRendering();
-}
-
-async function downsample(buffer, rate) {
-  if (buffer.sampleRate === rate) return buffer;
-  const ctx = new OfflineAudioContext(
-    buffer.numberOfChannels,
-    Math.ceil(buffer.duration * rate),
-    rate
+async function toMonoDownsampled(buffer, rate = 22050) {
+  // To mono
+  let mono = buffer;
+  if (buffer.numberOfChannels > 1) {
+    const mctx = new OfflineAudioContext(1, buffer.length, buffer.sampleRate);
+    const src = mctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(mctx.destination);
+    src.start();
+    mono = await mctx.startRendering();
+  }
+  // Downsample
+  if (mono.sampleRate === rate) return mono;
+  const dctx = new OfflineAudioContext(
+    1, Math.ceil(mono.duration * rate), rate
   );
-  const src = ctx.createBufferSource();
-  src.buffer = buffer;
-  src.connect(ctx.destination);
+  const src = dctx.createBufferSource();
+  src.buffer = mono;
+  src.connect(dctx.destination);
   src.start();
-  return ctx.startRendering();
+  return dctx.startRendering();
 }
 
 function exportMp3(buffer, bitrate, filename) {
-  const encoder = new lamejs.Mp3Encoder(
-    buffer.numberOfChannels,
-    buffer.sampleRate,
-    bitrate
-  );
+  const encoder = new lamejs.Mp3Encoder(buffer.numberOfChannels, buffer.sampleRate, bitrate);
   const samples = buffer.getChannelData(0);
   const block = 1152;
   const mp3 = [];
@@ -784,7 +854,6 @@ function floatTo16(f32) {
   return i16;
 }
 
-/* ========== UTIL ========== */
 function fmt(sec) {
   if (!sec || isNaN(sec)) return "00:00";
   const m = Math.floor(sec / 60);
@@ -795,7 +864,7 @@ function fmt(sec) {
 function setStatus(id, msg, type) {
   const el = document.getElementById(id);
   el.textContent = msg;
-  el.className = "status " + type;
+  el.className = "status " + (type || "");
 }
 </script>
 </body>
